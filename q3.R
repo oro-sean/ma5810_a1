@@ -26,8 +26,20 @@ trainingPredictors <- rawData[-test_index,predictors]
 trainingResponse <- as.factor(rawData[-test_index,"auth"])
 
 train_control <- trainControl(method = "cv", number = 10)
-tune_params <- expand.grid(usekernel = c(TRUE, FALSE), fL = 0:5, adjust = 1:5)
+tune_params <- expand.grid(usekernel = c(TRUE), fL = 0, adjust = 0:5)
 
 bank_nb_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params)
 confusionMatrix(bank_nb_mod1)
 plot(bank_nb_mod1)
+
+bank_nb_mod1$finalModel$tuneValue
+
+
+train_control <- trainControl(method = "cv", number = 10)
+
+
+bank_lda_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "lda", trControl = train_control)
+confusionMatrix(bank_lda_mod1)
+plot(bank_lda_mod1)
+
+bank_lda_mod1$finalModel$tuneValue
