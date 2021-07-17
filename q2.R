@@ -6,7 +6,6 @@ cat("\014")
 setwd("~/Documents/GitHub/ma5810_a1")
 
 library(naivebayes)
-library(ggplot2)
 library(caret, warn.conflicts = F, quietly = T)
 library(dplyr)
 
@@ -22,13 +21,13 @@ str(rawData)
 
 ## training test split
 
-test_index <- createDataPartition(rawData$Edible, p=0.8, list = FALSE)
+train_index <- createDataPartition(rawData$Edible, p=0.8, list = FALSE)
 predictors <- names(rawData[-1])
 
-testData <- rawData[test_index,]
+testData <- rawData[-train_index,]
 
-trainingPredictors <- rawData[-test_index,predictors]
-trainingResponse <- as.factor(rawData[-test_index,"Edible"])
+trainingPredictors <- rawData[train_index,predictors]
+trainingResponse <- as.factor(rawData[train_index,"Edible"])
 
 NB_Mushrooms <- naive_bayes(x = trainingPredictors, y = trainingResponse)
 Pred_class <- predict(NB_Mushrooms, newdata = testData[,2:21], type = "class")
