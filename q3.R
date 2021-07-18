@@ -55,7 +55,7 @@ plot(bank_nb_mod1) # plot accuracy across tuining grid
 
 bank_nb_mod1$finalModel$tuneValue # return hyperparameters of "best" model
 
-bank_nb_final <- bank_nb_mod1$finalModel # save the modt acurate model
+bank_nb_final <- bank_nb_mod1$finalModel # save the most acurate model
 
 
 ## train and tune lda clasifier using caret
@@ -66,7 +66,16 @@ bank_lda_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "l
 plot(bank_lda_mod1)
 
 bank_lda_mod1$finalModel$tuneValue
-banklda_final <- bank_lda_mod1$finalModel
+bank_lda_final <- bank_lda_mod1$finalModel
+
+## Use clasifiers to predict class on test data set
+pred_nb <- predict(bank_nb_final, newdata = testData)
+conf_nb <- confusionMatrix(pred_nb$class, testData$Auth)
+
+pred_lda <- predict(bank_lda_mod1, newdata = testData)
+conf_lda <- confusionMatrix(pred_lda, testData$Auth)
+
+
 
 ## close cluster
 stopCluster(cl)
