@@ -9,6 +9,7 @@ library(caret, warn.conflicts = F, quietly = T)
 library(dplyr)
 library(DataExplorer)
 library(doParallel)
+library(esquisse)
 
 set.seed(123)
 
@@ -30,63 +31,58 @@ plot_bar(rawData)
 plot_qq(rawData)
 plot_correlation(rawData[ ,1:4])
 
+modelData <- rawData
+
 ## create test training split, create test data frame and create training predictors data frame and training response vector
-train_index_10 <- createDataPartition(rawData$Auth, p=0.8, list = FALSE, times = 10) # returns numerical vector of the index of the observations to be included in the training set, repeat so we have 10 different test training sets for later
+train_index_10 <- createDataPartition(modelData$Auth, p=0.8, list = FALSE, times = 10) # returns numerical vector of the index of the observations to be included in the training set, repeat so we have 10 different test training sets for later
 train_index <- train_index_10[ ,1] # tuining hyperparaemters over a single test set is suitable so split out first index
-predictors <- names(rawData[-5]) # return vector of column names, removing "Auth" as it is the response variable
+predictors <- names(modelData[-5]) # return vector of column names, removing "Auth" as it is the response variable
 
-testData <- rawData[-train_index, ]
+testData <- modelData[-train_index, ]
 
-trainingPredictors <- rawData[train_index,predictors]
-trainingResponse <- as.factor(rawData[train_index, "Auth"])
+trainingPredictors <- modelData[train_index,predictors]
+trainingResponse <- as.factor(modelData[train_index, "Auth"])
 
-
-
+rm(rawData, file)
 ## register doParallel
 cl <- makePSOCKcluster(4)
 registerDoParallel(cl)
 
 ## train and tune Naive Bayes classifier using caret
 start_time <- Sys.time()
+
 train_control <- trainControl(method = "cv", number = 10) # use 10 fold cross validation on the training set to asses model hyper parameters
 tune_params <- expand.grid(usekernel = c(TRUE, FALSE), fL = 1:5, adjust = 1:5) # create tuning grid over available hyper parameters for NB model
 
-bank_nb_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params) # train model
+bank_nb_tune <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy") # train model
 
-plot(bank_nb_mod1) # plot accuracy across tuining grid
+plot(bank_nb_tune) # plot accuracy across tuining grid
 
-bank_nb_mod1$finalModel$tuneValue # return hyperparameters of "best" model
+bank_nb_tune$finalModel$tuneValue # return hyperparameters of "best" model
 
-bank_nb_final <- bank_nb_mod1$finalModel # save the most acurate model
-
+bank_nb_finalHP <- bank_nb_tune$finalModel # save the most acurate model
 
 ## train and tune lda clasifier using caret
 tune_params <- expand.grid(dimen = 0:10) # create tuning grid over available hyper parameters for NB model
 
-bank_lda_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params)
-plot(bank_lda_mod1)
+bank_lda_tune <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy")
+plot(bank_lda_tune)
 
-bank_lda_mod1$finalModel$tuneValue
-bank_lda_final <- bank_lda_mod1$finalModel
+bank_lda_tune$finalModel$tuneValue
+bank_lda_finalHP <- bank_lda_tune$finalModel
 
-## Use clasifiers to predict class on test data set
-pred_nb <- predict(bank_nb_final, newdata = testData)
-conf_nb <- confusionMatrix(pred_nb$class, testData$Auth)
-
-pred_lda <- predict(bank_lda_mod1, newdata = testData)
-conf_lda <- confusionMatrix(pred_lda, testData$Auth)
-
+rm(train_control, tune_params, bank_nb_tune, bank_lda_tune, train_index, trainingPredictors, trainingResponse)
 ## compare models over 10 differnt test/training data sets
 
 train_control <- trainControl(method = "cv", number = 10)
-tune_params_nb <- expand.grid(usekernel = bank_nb_final$tuneValue[1,2], fL = 1, adjust = bank_nb_final$tuneValue[1,3])
-tune_params_lda <- expand.grid(dimen = bank_lda_final$tuneValue[1,1])
+tune_params_nb <- expand.grid(usekernel = bank_nb_finalHP$tuneValue[1,2], fL = bank_nb_finalHP$tuneValue[1,1], adjust = bank_nb_finalHP$tuneValue[1,3])
+tune_params_lda <- expand.grid(dimen = bank_lda_finalHP$tuneValue[1,1])
 
 all_nb <- lapply(seq_len(ncol(train_index_10)), function(i){
   
-  trainingPredictors <- rawData[train_index_10[ ,i],predictors]
-  trainingResponse <- rawData[train_index_10[ ,i],"Auth"]
-  testData <- rawData[-train_index_10[,i], ]
+  trainingPredictors <- modelData[train_index_10[ ,i],predictors]
+  trainingResponse <- modelData[train_index_10[ ,i],"Auth"]
+  testData <- modelData[-train_index_10[,i], ]
   
   bank_mod4ass_nb <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params_nb)
   
@@ -98,9 +94,9 @@ all_nb <- lapply(seq_len(ncol(train_index_10)), function(i){
 
 all_lda <- lapply(seq_len(ncol(train_index_10)), function(i){
   
-  trainingPredictors <- rawData[train_index_10[ ,i],predictors]
-  trainingResponse <- rawData[train_index_10[ ,i],"Auth"]
-  testData <- rawData[-train_index_10[,i], ]
+  trainingPredictors <- modelData[train_index_10[ ,i],predictors]
+  trainingResponse <- modelData[train_index_10[ ,i],"Auth"]
+  testData <- modelData[-train_index_10[,i], ]
  
   bank_mod4ass_lda <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params_lda)
   
@@ -149,8 +145,8 @@ nb_Spec <- lapply(seq_len(length(all_nb)), function(i){
   unlist(all_nb[[i]]$byClass["Specificity"])
 })
 
-perf_nb <- data.frame(unlist(nb_acuracy), unlist(nb_Kappa), unlist(nb_Sens), unlist(nb_Spec))
+performance<- data.frame(c(1:10), unlist(nb_acuracy), unlist(lda_acuracy), unlist(nb_Kappa), unlist(lda_Kappa), unlist(nb_Sens), unlist(lda_Sens), unlist(nb_Spec), unlist(lda_Spec))
 
-perf_lda <- data.frame(unlist(lda_acuracy), unlist(lda_Kappa), unlist(lda_Sens), unlist(lda_Spec))
+names(performance) <- c("observation", "nb_acuracy","lda_acuracy", "nb_Kappa", "lda_Kappa", "nb_Sens", "lda_Sens", "nb_Spec", "lda_Spec")
 
-
+rm(lda_acuracy , lda_Kappa, lda_Sens, lda_Spec, nb_acuracy, nb_Kappa, nb_Sens, nb_Spec)
