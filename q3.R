@@ -47,7 +47,7 @@ cl <- makePSOCKcluster(4)
 registerDoParallel(cl)
 
 ## train and tune Naive Bayes classifier using caret
-
+start_time <- Sys.time()
 train_control <- trainControl(method = "cv", number = 10) # use 10 fold cross validation on the training set to asses model hyper parameters
 tune_params <- expand.grid(usekernel = c(TRUE, FALSE), fL = 1:5, adjust = 1:5) # create tuning grid over available hyper parameters for NB model
 
@@ -79,11 +79,9 @@ conf_lda <- confusionMatrix(pred_lda, testData$Auth)
 ## compare models over 10 differnt test/training data sets
 
 train_control <- trainControl(method = "cv", number = 10)
-#tune_params_nb <- expand.grid(fl = bank_nb_final$tuneValue[1,1], usekernel = bank_nb_final$tuneValue[1,2], adjust = bank_nb_final$tuneValue[1,3])
 tune_params_nb <- expand.grid(usekernel = bank_nb_final$tuneValue[1,2], fL = 1, adjust = bank_nb_final$tuneValue[1,3])
 tune_params_lda <- expand.grid(dimen = bank_lda_final$tuneValue[1,1])
 
-start_time <- Sys.time()
 all_nb <- lapply(seq_len(ncol(train_index_10)), function(i){
   
   trainingPredictors <- rawData[train_index_10[ ,i],predictors]
@@ -95,16 +93,64 @@ all_nb <- lapply(seq_len(ncol(train_index_10)), function(i){
   pred <- predict(bank_mod4ass_nb, newdata = testData)
   
   confusionMatrix(pred, testData$Auth)
+
+})
+
+all_lda <- lapply(seq_len(ncol(train_index_10)), function(i){
   
+  trainingPredictors <- rawData[train_index_10[ ,i],predictors]
+  trainingResponse <- rawData[train_index_10[ ,i],"Auth"]
+  testData <- rawData[-train_index_10[,i], ]
+ 
+  bank_mod4ass_lda <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params_lda)
   
+  pred <- predict(bank_mod4ass_lda, newdata = testData)
   
-  
+  confusionMatrix(pred, testData$Auth)
   
 })
 
 end_time <- Sys.time()
-
 (runtime <- end_time - start_time)
+
+
 ## close cluster
 stopCluster(cl)
+
+lda_acuracy <- lapply(seq_len(length(all_lda)), function(i){
+  unlist(all_lda[[i]]$overall["Accuracy"])
+})
+
+lda_Kappa <- lapply(seq_len(length(all_lda)), function(i){
+  unlist(all_lda[[i]]$overall["Kappa"])
+})
+
+lda_Sens <- lapply(seq_len(length(all_lda)), function(i){
+  unlist(all_lda[[i]]$byClass["Sensitivity"])
+})
+
+lda_Spec <- lapply(seq_len(length(all_lda)), function(i){
+  unlist(all_lda[[i]]$byClass["Specificity"])
+})
+
+nb_acuracy <- lapply(seq_len(length(all_nb)), function(i){
+  unlist(all_nb[[i]]$overall["Accuracy"])
+})
+
+nb_Kappa <- lapply(seq_len(length(all_nb)), function(i){
+  unlist(all_nb[[i]]$overall["Kappa"])
+})
+
+nb_Sens <- lapply(seq_len(length(all_nb)), function(i){
+  unlist(all_nb[[i]]$byClass["Sensitivity"])
+})
+
+nb_Spec <- lapply(seq_len(length(all_nb)), function(i){
+  unlist(all_nb[[i]]$byClass["Specificity"])
+})
+
+perf_nb <- data.frame(unlist(nb_acuracy), unlist(nb_Kappa), unlist(nb_Sens), unlist(nb_Spec))
+
+perf_lda <- data.frame(unlist(lda_acuracy), unlist(lda_Kappa), unlist(lda_Sens), unlist(lda_Spec))
+
 
