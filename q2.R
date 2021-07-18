@@ -8,6 +8,7 @@ setwd("~/Documents/GitHub/ma5810_a1")
 library(naivebayes)
 library(caret, warn.conflicts = F, quietly = T)
 library(dplyr)
+library(bnclassify)
 
 set.seed(123)
 
@@ -40,5 +41,5 @@ plot(NB_Mushrooms)
 train_control <- trainControl(method = "cv", number = 10)
 
 
-edible_nb_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "lda", trControl = train_control)
-confusionMatrix(edible_nb_mod1)
+edible_nb_mod1 <- train(x = trainingPredictors, y = trainingResponse, method = "nbDiscrete", trControl = train_control)
+confusionMatrix(edible_nb_mod1$finalModel)
