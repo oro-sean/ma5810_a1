@@ -57,9 +57,6 @@ tune_params <- expand.grid(usekernel = c(TRUE, FALSE), fL = 1:5, adjust = 1:5) #
 bank_nb_tune <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy") # train model
 
 plot(bank_nb_tune) # plot accuracy across tuining grid
-
-bank_nb_tune$finalModel$tuneValue # return hyperparameters of "best" model
-
 bank_nb_finalHP <- bank_nb_tune$finalModel # save the most acurate model
 
 ## train and tune lda clasifier using caret
@@ -67,8 +64,6 @@ tune_params <- expand.grid(dimen = 0:10) # create tuning grid over available hyp
 
 bank_lda_tune <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy")
 plot(bank_lda_tune)
-
-bank_lda_tune$finalModel$tuneValue
 bank_lda_finalHP <- bank_lda_tune$finalModel
 
 rm(train_control, tune_params, bank_nb_tune, bank_lda_tune, train_index, trainingPredictors, trainingResponse)
