@@ -16,3 +16,15 @@ set.seed(123)
 
 file <- 'HBblood.csv'
 rawData <- read.csv(file, header = TRUE, stringsAsFactors = TRUE)
+
+str(rawData)
+introduce(rawData)
+head(rawData)
+summary(rawData)
+plot_histogram(rawData)
+plot_bar(rawData)
+plot_qq(rawData)
+plot_correlation(rawData[ ,2:3])
+plot_correlation(rawData)
+
+modelData <- rawData
