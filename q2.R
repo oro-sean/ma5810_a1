@@ -133,8 +133,8 @@ pred <- predict(mushroom_mod4ass, newdata = testData) # use model to make predic
 confusionMatrix(pred, testData$Edible) # return confusion matrix for predicted and actual classes
 
 ## Plot model performance
-performance_flat <- melt(performance, id.vars = 1)
-ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom")
+performance_flat <- melt(performance, id.vars = 1) # flatten performance for easy use in ggplot
+ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") # plot each performance metric for each test / train split, with lines between points to easily identify trends
 
 ## plot plot variable importance
 varimp <- varImp(mushroom_mod4ass)

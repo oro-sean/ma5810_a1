@@ -42,7 +42,7 @@ Now that we have a basic understanding of the data we can explore the make up of
 * Correlation between predictor variables
 * Suitability of assuming shared variance
 
-```{r echo = FALSE}
+```{r, echo = FALSE, out.width="50%", out.extra='style="float:right; padding:10px"'}
 ggplot(rawData) + aes(x = SBP, y = HbA1c, colour = Ethno) + geom_point(shape = "circle", size = 1.5) + scale_color_hue(direction = 1) + theme_minimal() # create scatter plot with predictor variables on x and y, colour points by Ethno
 ```
 It can be seen that the predictor variables do not really distinguish well between all three values of Ethno. While belonging to class A or not may be well predicted by SBP there is no clear correlation between HbA1c or SBP and Ethno. While a flexiable descion boundry may seem like a good choice in this situation it will ultimatley lead to a model which simply follows the noise in the training data rather than capture any posible correlation that may actually exist. We will further explore the atributes of the predictor variables.
@@ -263,6 +263,9 @@ ga <- ggplot(modelData) + aes(x = `Gill-Attachment`, fill = Edible) + geom_bar()
 comparision <- ggarrange(spc, gc, vc, ga, labels = c("Spore-Print_colour","Gill-Colour", "Veil-Colour", "Gill-Attachment"), ncol = 2, nrow = 2) # group plots together, one on top of the other
 annotate_figure(comparision, top = text_grob("Most and Least Important Variables", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
 ```
-The qualities which make for a imortant and un important variable can be clearly seen. In the case of the important variables if a particular observation is a member of a given class it has a signifigantly higher likely hood of being either edible or poisons and membership of classes is relatively even. The opposite is true for the least important variables, where membership of a given class is either low or gives no distinctly higher likely hood of being edible or poisons 
+The qualities which make for a imortant and un important variable can be clearly seen. In the case of the important variables if a particular observation is a member of a given class it has a significantly higher likely hood of being either edible or poisons and membership of classes is relatively even. The opposite is true for the least important variables, where membership of a given class is either low or gives no distinctly higher likely hood of being edible or poisons 
 ***
 
+## Question 3
+
+The full code for the implementation of the Naive Bayes and Linear Dicriminat Analysis Clasifier (LDA) is shown in Apendix 3.
