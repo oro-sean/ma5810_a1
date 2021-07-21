@@ -21,7 +21,7 @@ names(rawData) <- c("Variance", "Skewness","Kurtosis", "Entropy", "Auth") # set 
 rawData <- rawData %>% mutate(Auth = ifelse(Auth == 1, "Authentic", "Fraudulent")) # change the values Auth with an observation of 1 to "True", otherwise "False"
 rawData$Auth <- as.factor(rawData$Auth) # make the "Auth" column a factor
 
-## exploratory visualization of the dataset and sumation of data set
+## exploratory visualization of the dataset and summation of data set
 str(rawData)
 introduce(rawData)
 head(rawData)
