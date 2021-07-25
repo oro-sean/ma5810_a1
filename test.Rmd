@@ -1,18 +1,30 @@
 ---
 title: "MA5810 Introduction to Data Mining Assignment 1"
-output: html_document
+output:
+html_document: default
+documentclass: article
+classoption: a4paper
 ---
 
 ```{r setup, include=FALSE}
+# Setup r markdwon
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = "~/Documents/GitHub/ma5810_a1/")
 ```
-***
+
+------------------------------------------------------------------------
+
 ## Set Up.
 
-For each question of this assignment the first step is to clear the r work space, import the data and structure the resulting data frame so as it can be easily referenced throughout the investigation. Further the required packages for the investigation are imported using the library() function. The complete r code for each question can be found in Appendices 1->3 respectively.
-***
+For each question of this assignment the first step is to clear the r work space, import the data and structure the resulting data frame so as it can be easily referenced throughout the investigation. The required packages for the investigation are then imported using the library() function. The complete r code for each question can be found in Appendices 1 to 3 respectively.
+
+------------------------------------------------------------------------
+
 ```{r echo = FALSE, include = FALSE}
+
+########
+# Start Q1
+######
 ## set up environment and import data file
 
 rm(list = ls()) # removes all variables
@@ -34,41 +46,59 @@ rawData <- read.csv(file, header = TRUE, stringsAsFactors = TRUE) # the data is 
 
 ## Question 1
 
-The first step when undertaking any data analysis task is to perform some basic data exploration. In this case after importing the data the data exploration shown in Apendix 1 was undertaken. It can be seen that all 1200 observations have successfully imported. The data types in the data frame appear to be corre3ct witht he categorical variable "Ethno" being a factor and the two continuous variables being numeric. Again it can be seen we have a single categorical variable and two continuous variables. Importantly we have no incomplete observations. All 3 categories of the Ethno variable are well represented and the continuous variables are all positive but have very different ranges.
+The first step when undertaking any data analysis task is to perform some basic data exploration. The full exploration can be seen in Apendix one. The following points have been confirmed in this initial exploration:
 
-Now that we have a basic understanding of the data we can explore the make up of the data and investigate which classification method would be best suited to predict Ethno using HbA1c and SBP as predictors. Naive Bayes (NB), Linear Discriminant (LDA) and Quadratic Discriminant classifiers (QDA) all use Bayes theorem to apply a probability an observation belongs to each class given the values of the predictor variables. QDA is a general form of LDA which is a general from of NB the primary difference is the way in which the models deal with the decision boundary, with QDA being the most flexible and NB the least, and the assumptions around normality and covariance and correlation between predictor variables. To avoid over fitting it is good practice to select the least flexible suitable model, however if these means the model assumptions are violated it may not yield the best results. We will use exploratory visualization to investigate the following
-* Any noticeable visual groupings between the predictors and Ethno and hints about a suitable decision boundary,
-* Distribution of predictor variables
-* Correlation between predictor variables
-* Suitability of assuming shared variance
+-   all 1200 observations have successfully imported.
 
-```{r, echo = FALSE, out.width="50%", out.extra='style="float:right; padding:10px"'}
-ggplot(rawData) + aes(x = SBP, y = HbA1c, colour = Ethno) + geom_point(shape = "circle", size = 1.5) + scale_color_hue(direction = 1) + theme_minimal() # create scatter plot with predictor variables on x and y, colour points by Ethno
+-   The data types in the data frame appear to be correct with the categorical variable "Ethno" being a factor and the two continuous variables being numeric.
+
+-   There are no incomplete observations.
+
+-   All 3 categories of the Ethno variable are well, and approximately evenly, represented and the continuous variables are all positive but have very different ranges.
+
+Now that we have a basic understanding of the data we can drill deeper into the data and investigate which classification method would be best suited to predict Ethno using HbA1c and SBP as predictors. Naive Bayes (NB), Linear Discriminant (LDA) and Quadratic Discriminant classifiers (QDA) all use Bayes theorem to apply a probability an observation belongs to each class given the values of the predictor variables. The observation is assigned the class with the highest probability. QDA is a general form of LDA which is a general from of NB. If one were to consider the model graphically, the primary difference between the models is the way in which they deal with the decision boundary, with QDA being the most flexible and NB the least. This characteristic is a function of the assumptions around normality and covariance covariance (and therefore correlation) between the predictor variables. Generally, to avoid over fitting it is good practice to select the least flexible yet suitable model. However if this means the model assumptions are violated it may not be the best choice. Figure 1 shows a scatter plot of the numerical predictors with the points coloured by the categorical response variable. This figure was inspected to inform the following:
+
+-   Any noticeable visual groupings between the predictors and Ethno,
+
+-   Hints about a suitable decision boundary,
+
+-   Distribution of predictor variables,
+
+-   Correlation between predictor variables,
+
+-   Suitability of assuming a single covariance matrix.
+
+```{r, echo = FALSE, out.width="80%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 1: Scatter plot of SBP vs HbA1c coloured by Ethno"}
+ggplot(rawData) + aes(x = SBP, y = HbA1c, colour = Ethno) + geom_point(shape = "circle", size = 1.5) + scale_color_hue(direction = 1) + theme_minimal() + labs(title = "SBP vs BhA1c")  
+# create scatter plot with predictor variables on x and y, colour points by Ethno
 ```
-It can be seen that the predictor variables do not really distinguish well between all three values of Ethno. While belonging to class A or not may be well predicted by SBP there is no clear correlation between HbA1c or SBP and Ethno. While a flexiable descion boundry may seem like a good choice in this situation it will ultimatley lead to a model which simply follows the noise in the training data rather than capture any posible correlation that may actually exist. We will further explore the atributes of the predictor variables.
 
-```{r echo = FALSE}
+It can be seen that the predictor variables do not really distinguish well between all three values of Ethno as there is no clear correlation between HbA1c or SBP and Ethno. Interestignly belonging to class A or not seems to be well correlated with SBP. On first inspection a flexible decision boundary may seem like a good choice in this situation it can ultimately lead to a model which simply follows the noise in the training data rather than capture correlation that may actually exist. We will further explore the attributives of the predictor variables to asses which model is most likely to be suitable.
+
+```{r echo = FALSE, out.width="50%", out.extra='style="float:left; padding:10px"', fig.cap= " Figure 2: Density Distributions of numeric predictors"}
 hb <- ggplot(rawData) + aes(x = HbA1c) + geom_density(adjust = 1L, fill = "#FF8C00") + theme_minimal() # create distribution plot of HbA1c
 sb <- ggplot(rawData) + aes(x = SBP) + geom_density(adjust = 1L, fill = "#EF562D") + theme_minimal() # create distribution plot of SBP
 densityPlot <- ggarrange(hb,sb, labels = c("HbA1c", "SBP"), ncol = 1, nrow = 2) # group plots together, one on top of the other
 annotate_figure(densityPlot, top = text_grob("Density Distributions of Predictor variables HbA1c and SBP", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
 ```
-The above plot shows that while the HbA1c data is heavily left squewed the assumption of normality may be able to be accommodated, however the distribution of SBP is far from normal. With the assumption of normality for the predictor variables clearly violated the use of a Naive Bayes Classifier is not an option. We will now investigate correlation between variables as an indicator of covariance.
 
-```{r echo = FALSE}
+```{r echo = FALSE, out.width="50%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 3: Correlation between predictors"}
 plot_correlation(rawData[ ,2:3], title = "Correlation Between Predictor Variables") # create a correlation plot to asses correlation and covariance between predictors
 ```
-It can be seen that there is negligible correlation between SBP and HbA1c. It follows that if there is little correlation there will be significant difference in co-variance between the two predictors. Since the primary distinguished feature between LDA and QDA models is the assumption of a common covariance matrix (in the case of LDA) the use of a QDA classifier is the most statistically sound approach. As previously mentioned, while the QDA method is most statistically sound, its flexibility may lead to model over fitting which outweighs the violation of assumptions of more rigid models. The following plots further show the difficulty that will be encountered trying to predict Ethno using the provided features. If the question could be rephrased to just predict Ethno A or other SBP could potentially provided sound results using a Naive Bayes classifier. This is due to the distinguished and normal distribution of SBP for observations with classed as Ethno A.
 
-```{r echo = FALSE}
+```{r echo = FALSE, out.width="50%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 4: Density Distributions by class and predictor"}
 hbByGroup <- ggplot(rawData) + aes(x = HbA1c, fill = Ethno) + geom_density(adjust = 1L) + scale_fill_hue(direction = 1) + theme_minimal() # create density plot by groups for HbA1c
 sbpByGroup <- ggplot(rawData) + aes(x = SBP, fill = Ethno) + geom_density(adjust = 1L) + scale_fill_hue(direction = 1) + theme_minimal() # create density plot by groups for SBP
-groupeddensityPlot <- ggarrange(hbByGroup,sbpByGroup, labels = c("HbA1c", "SBP"), ncol = 1, nrow = 2) # group plots together, one on top of the other
+groupeddensityPlot <- ggarrange(hbByGroup,sbpByGroup, labels = c("HbA1c", "SBP"), ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom") # group plots together, one on top of the other
 annotate_figure(groupeddensityPlot, top = text_grob("Density Distributions of Predictor variables Grouped by Ethno", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
 ```
-***
+
+Figure 2 shows that while the HbA1c data is heavily left skewed the assumption of normality may be still be able to be accommodated, however the distribution of SBP is far from normal. With the assumption of normality for the predictor variables clearly violated the use of a Naive Bayes Classifier is not an option. We will now investigate correlation between variables as an indicator of covariance. It can be seen in Figure 3 that there is negligible correlation between SBP and HbA1c. It follows that if there is little correlation there will be significant difference in co-variance between the two predictors. Since the primary distinguished feature between LDA and QDA models is the assumption of a common covariance matrix (in the case of LDA) the use of a QDA classifier is the most statistically sound approach. As previously mentioned, while the QDA method is most statistically sound, its flexibility may lead to model over fitting which outweighs the violation of assumptions of more rigid models. Figure 4 further show the difficulty that will be encountered trying to predict Ethno using the provided features. If the question could be rephrased to just "predict belonging to Ethno A or other" SBP could potentially provided sound results using a Naive Bayes classifier. This is due to the distinguished and normal distribution of SBP for observations with class Ethno A.
+
+------------------------------------------------------------------------
 
 ## Question 2
+
 ```{r echo = FALSE, include = FALSE}
 ## set up environment and import csv file
 
@@ -80,10 +110,11 @@ setwd("~/Documents/GitHub/ma5810_a1") # set the working directory
 # import required packages
 library(caret, warn.conflicts = F, quietly = T)
 library(dplyr)
-library(bnclassify)
+library(bnclassify) # for 'nbDiscrete' model
 library(DataExplorer)
 library(doParallel)
 library(reshape2)
+library(ggplot2)
 
 set.seed(123) # sets seed for repeat ability of randomly generated numbers
 
@@ -102,24 +133,39 @@ plot_bar(modelData, by = "Edible") # create bar plots of all predictor variables
 
 ```
 
-After importing the data set some basic exploratory visualization and summation was undertaken as can be seen in Apendix 2
+After importing the data set some basic exploratory visualization and summation was undertaken as can be seen in Apendix 2. From the initial exploration we can note a few critical points about the dataset
 
-From the initial exploration we can note a few critical things
-* All predictor variables are categorical, this suggests that a Discreate Naive Bayes model will most likely perform best at predicting if a mushroom is edible
-* All observations appear to be complete, although stalk root seems to be missing some information as there is a category denoted by "?"
-* Veil-Type has only one category and as such will be of little interest to the classifier, this predictor will be dropped
-* Many of the classes of the predictor variables have a majority of records in a few levels and the other levels are sparsely populated. When splitting the test and training set and then further splitting for k-folds validation this can be problematic.
+-   All predictor variables are categorical, this suggests that a Discreate Naive Bayes model will most likely perform best at predicting if a mushroom is edible
 
-Further it can be seen that the missing value denoted by "?" in Stalk-Root appears to occour roughly evenly between ediable an poisinous cases and such it will be left in the data set. Ultimatley its inclusion or exclusion is not likely to affect the accuracy of the model greatly and the way in which its delt with should be adressed specific to the domian, which in this case we have little information about. 
+-   All observations appear to be complete, although stalk root seems to be missing some information as there is a category denoted by "?"
 
-While it can be seen that many of the less populated classes in the predictor variables do offer some distiguishing properties between edible and not the following predictors do not as a majority of observations in the minority classes belong to the same class and thus these classes will be grouped into a new "other" class so as the class is better represented in the test and training data. 
-* Cap-Colour
-*Stalk-Colour
-*Spore-Print-Colour
+-   Veil-Type has only one category and as such will be of little interest to the classifier, this predictor will be dropped
 
-INSER PLOT HERE
+-   Many of the classes of the predictor variables have a majority of records in a few levels and the other levels are sparsely populated. When splitting the test and training set and then further splitting for k-folds validation this can be problematic as the sub samples may not contain records with these classes.
 
-Now that the data has been wrangled into a suitable shape a test and training split will be created. While the caret function createDataPartion() creates a stratified sample, it oes so only over the predictor variable and as such, partiucalry since we have some classes of predictor with very few observations, the model will perform differently on different test and training sets. For this reason 10 different test and training sets will be selected.
+```{r echo = FALSE, out.width="40%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 5: Make up of predictor Stalk Root"}
+ggplot(modelData) + aes(x = `Stalk-Root`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + labs(title = "Stalk-Root") 
+
+```
+
+With out domain knowledge of how the missing values "? in stalk root came about it is difficult to determine how it should be best dealt with. It can be seen in figure 5 that the missing value appears to occur roughly evenly between edible an poisonous cases and such it will be left in the data set as ultimately its inclusion or exclusion is not likely to affect the accuracy of the model greatly and it should be addressed in a way which is correct in the context of the domain of the data.
+
+```{r echo = FALSE, out.width="100%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 6: Assessing which predictors to combine lowly populated classes"}
+cs <- ggplot(modelData) + aes(x = `Cap-Shape`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+csu <- ggplot(modelData) + aes(x = `Cap-Surface`, fill = Edible) + geom_bar() +scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+cc <- ggplot(modelData) + aes(x = `Cap-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+scar <- ggplot(modelData) + aes(x = `Stalk-Colour-Above-Ring`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+scbr <- ggplot(modelData) + aes(x = `Stalk-Colour-Below-Ring`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+vc <- ggplot(modelData) + aes(x = `Veil-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+rt <- ggplot(modelData) + aes(x = `Ring-Type`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+sp <- ggplot(modelData) + aes(x = `Spore-Print-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+
+predictorsToReduce <- ggarrange(cs, csu, cc, scar, scbr, vc,rt, sp, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom")  # group plots together, one on top of the other
+annotate_figure(predictorsToReduce, top = text_grob("Assesment of Predictors for combining classes", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
+
+```
+
+Figure 6 shows that many of the less populated classes in the predictor variables do offer some distinguishing properties between edible or poisonous the predictors; *Cap-Colour, Stalk-Colour and Spore-Print-Colour* should have their lowly populated classes combined as a majority of observations in these classes belong to the same class. These observations will be grouped into a new "other" class so as the class is better represented in the test and training data. This was performed using the group_category function as shown in the bellow code block.
 
 ```{r echo = FALSE, include = FALSE}
 # group minority classes and change variable type back to factor
@@ -133,19 +179,24 @@ modelData$`Spore-Print-Colour` <- as.factor(modelData$`Spore-Print-Colour`)
 rm(rawData, file) # remove variables that will no longer be required
 ```
 
+Now that the data has been wrangled into a suitable shape a test and training split will be created. While the caret function createDataPartion() creates a stratified sample, it does so only over the predictor variable and as such, particularity since we have some classes of predictor with very few observations, the model will perform differently on different test and training sets. For this reason 10 different test and training sets will be generated. The indexes for each training data set will be stored in a column of the variable "train_index_10".
+
 ```{r}
 ## create test training split, create test data frame and create training predictors data frame and training response vector
 train_index_10 <- createDataPartition(modelData$Edible, p=0.8, list = FALSE, times = 10) # returns numerical vector of the index of the observations to be included in the training set, repeat so we have 10 different test training sets for later
 predictors <- names(modelData[-1]) # return vector of column names, removing "Auth" as it is the response variable
 ```
 
-As outlined above a Discreate Naive Bayes Clasification model will be used. To find the hyperparamters that can be tuned on the model the following code was used.
+As outlined above a Naive Bayes Classification model will be used. Caret has many versions of the Naive Bayes model that cna be called. In this case we will use the "nbDiscrete" version. To find the hyperparameter that can be tuned on the model the following code was used.
 
 ```{r}
 (modelLookup("nbDiscrete"))
 ```
 
-It shows that only the smoothing parameter can be tuned. The training environment was then set up. Traning was set to occouyr using 10 fold cross validation over a training grid of one hyper parameter, smoothing, with values from 1:10.
+It shows that only the smoothing (lap-lace smoothing) parameter can be tuned. Lap-Lace smoothing relates to the way the model deals with classes with zero probability as they have not appeared in the training data set. Hopefully the data wrangling in the previous step will eliminate the need for this. For completeness we will check if the model performs differently for smoothing values 1 --\> 10.
+
+The training environment was then set up. Training was set to be undertken using 10 fold cross validation over a training grid of one hyper parameter, smoothing, with values from 1:10. This means that the model will be trained on a sub division of 9/10 ths of the training set and assessed on the remaining 1/10 th. The divisions remain unchanged and the model is trained and assesed over each unique combination.
+
 ```{r echo = FALSE, include = FALSE}
 ## set up training environment with the details of the validation method and tune grid
 train_control <- trainControl(method = "cv", number = 10) # instruct training to occur using k folds cross validation with 10 folds
@@ -225,7 +276,7 @@ nb_Spec <- lapply(seq_len(length(all_nb_confusionMatrix)), function(i){
 })
 
 performance <- data.frame(c(1:10), unlist(nb_acuracy), unlist(nb_Kappa), unlist(nb_Sens), unlist(nb_Spec), trainingAccuracy)
-names(performance) <- c("Test/ Training Split #", "Accuracy","Kappa", "Sensitivity","Specitivity", "Accuracy on Training Data")
+names(performance) <- c("Test/ Training Split #", "Accuracy","Kappa", "Sensitivity","Specificity", "Accuracy on Training Data")
 
 rm(nb_acuracy, nb_Kappa, nb_Sens, nb_Spec, all_nb_confusionMatrix)
 
@@ -239,34 +290,40 @@ pred <- predict(mushroom_mod4ass, newdata = testData) # use model to make predic
 confusionMatrix(pred, testData$Edible) # return confusion matrix for predicted and actual classes
 
 ```
-A Discrete Naive Bayes model was then tuned on all 10 test / training data sets with the best hyperparamemter from each set recorded. The best hyperparameter was taken to be the one which produced the highest level of prediction accuracy in the 10 fold cross validation that was undertaken for each training data set. The average of the hyperparameter was then taken from the 10 training sets. This value was then used to train and test a model across each of the 10 training / test sets. The code detailing these steps can be found in Apendix 2.
 
-```{r echo = FALSE}
+A Discrete Naive Bayes model was then tuned on all 10 test / training data sets with the best hyperparamemter from each set recorded. The best hyperparameter was taken to be the one which produced the highest level of prediction accuracy in the 10 fold cross validation that was undertaken for each training data set. The average of the hyperparameter was then taken from the 10 training sets. This value was then used to train and test a model across each of the 10 training / test sets.
+
+```{r echo = FALSE, out.width="75%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 7: Model Accuracy for each Test/Trainin Split"}
 performance_flat <- melt(performance, id.vars = 1) # flatten performance for easy use in ggplot
-ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") # plot each performance metric for each test / train split, with lines between points to easily identify trends
+ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") + ggtitle("Model Accuracy for all test training splits") # plot each performance metric for each test / train split, with lines between points to easily identify trends
 ```
-The best measure of model performance is a domain specific question, in this case you could hypothesise it is desirable to have the most accurate model or a model which offers the lowest rate of "False Negatives", in this case poisonous mushrooms classified as edible, as in some cases this could have severe conseqences. Fortunatley what can be seen in the above plot is that the specificity and accuracy (which was used to train this model) follow a similar trend so as far as developing the model is concerned which parameter is more important is some what trivial. Interestingly while the trend for accuracy on the training data is similar the variance is much lower. Two factors contribute to this being the case
 
-```{r echo = FALSE}
+The best measure of model performance is a domain specific question, in this case you could hypothesis it is desirable to have the most accurate model or a model which offers the lowest rate of "False Negatives", which is measured as specificity . In this case that means the target would be to minimise the number of times poisonous mushrooms are classified as edible, as this could be considered more important than overall accuracy. Fortunately what can be seen in figure 8 is that the specificity and accuracy (which was used to train this model) follow a similar trend so as far as developing this model is concerned which parameter is more important is some what trivial.
+
+```{r echo = FALSE, out.width="75%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 8: Most and Least Important Variables and their make up by class"}
 ## plot plot variable importance
 varimp <- varImp(mushroom_mod4ass)
-plot(varimp)
-```
-The above plot shows the importance of each variable to the model to further understand this we will plot the count, broken down into clasification of edible or poisons for the most and least important features.
-
-```{r echo = FALSE}
+var <- plot(varimp)
 ## plot the 2 most and least important variable for discussion
-spc <- ggplot(modelData) + aes(x = `Spore-Print-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-gc <- ggplot(modelData) + aes(x = `Gill-Colour`, fill = Edible) + geom_bar() +scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-vc <- ggplot(modelData) + aes(x = `Veil-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-ga <- ggplot(modelData) + aes(x = `Gill-Attachment`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal()
-comparision <- ggarrange(spc, gc, vc, ga, labels = c("Spore-Print_colour","Gill-Colour", "Veil-Colour", "Gill-Attachment"), ncol = 2, nrow = 2) # group plots together, one on top of the other
-annotate_figure(comparision, top = text_grob("Most and Least Important Variables", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
+spc <- ggplot(modelData) + aes(x = `Spore-Print-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+gc <- ggplot(modelData) + aes(x = `Gill-Colour`, fill = Edible) + geom_bar() +scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+vc <- ggplot(modelData) + aes(x = `Veil-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal() + rremove("y.title")
+ga <- ggplot(modelData) + aes(x = `Gill-Attachment`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal() + rremove("y.title")
+comparision <- ggarrange(spc, gc, vc, ga, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")  # group plots together, one on top of the other
+all <- ggarrange(var, comparision, ncol = 2, nrow = 1)
+annotate_figure(all, top = text_grob("Most and Least Important Variables and their make up by class", color = "blue", face = "bold", size = 14)) # give the plot frame a common tittle
 ```
-The qualities which make for a imortant and un important variable can be clearly seen. In the case of the important variables if a particular observation is a member of a given class it has a significantly higher likely hood of being either edible or poisons and membership of classes is relatively even. The opposite is true for the least important variables, where membership of a given class is either low or gives no distinctly higher likely hood of being edible or poisons 
-***
+
+Interestingly while the trend for accuracy on the training data is similar the variance is much lower. This shows how the model is affected by some over fitting. When averaged over many test and training sets, as is the case in the training data the predictions are stable. However when this averaging is not available it can be seen that the results become more variable.
+
+This is amplified with the issue we sort to address by combining smaller classes and a few predictors having to large an influence, essentially reducing the models instrumentality to far bellow that of the problems.To further investigate this we will consider the properties of the most and least important predictors in the model. Figure 8 shows the importance of each variable to the model and a breakdown of the most and least important variables.
+
+The qualities which make for a important and un important variable can be clearly seen. In the case of the important variables, if a particular observation is a member of a given class it has a significantly higher likely hood of being either edible or poisons and membership of classes is relatively even. The opposite is true for the least important variables, where membership of a given class is either low or gives no distinctly higher likely hood of being edible or poisons. This differing weighting in the model does reflect the truth, however as the test splits are still only a sample when the variation in the sample differs from the population and / or the training set the model will test as less accurate.
+
+------------------------------------------------------------------------
 
 ## Question 3
+
 ```{r echo = FALSE, include = FALSE}
 ## set up environment and import data file
 
@@ -335,7 +392,7 @@ bank_lda_final <- bank_lda$finalModel # save most accurate model
 rm(tune_params, train_index, trainingPredictors, trainingResponse)
 ```
 
-The full code for the implementation of the Naive Bayes (NB) and Linear Dicriminat Analysis Clasifier (LDA) is shown in Apendix 3. Each model was first tuned on a training data set using 10 fold cross validation. The hyperparameters from each model were then stored and each model trained on 10 different test / training sets. The test training split was created using the createDataPartion() function from caret. While this function ensures the class balences remain the same in the test and training sets for the response variable the same can not be achieved for the predictor variables. To understand any variation in modle perfromnce due to the make up of the training data the model was assed on all 10 test training splits. The following model summaries were obtained.
+The full code for the implementation of the Naive Bayes (NB) and Linear Discriminate Analysis Classifier (LDA) is shown in Appendix 3. Each model was first tuned on a training data set using 10 fold cross validation. The hyperparameters from each model were then stored and each model trained on 10 different test / training sets. The test training split was created using the createDataPartion() function from caret. While this function ensures the class balances remain the same in the test and training sets for the response variable the same can not be achieved for the predictor variables. To understand any variation in model performance due to the make up of the training data the model was tested on all 10 test training splits. The following model summaries were obtained.
 
 ```{r echo = FALSE}
 ## create confusion matrix to summarize each model
@@ -425,376 +482,20 @@ names(performance) <- c("Test/ Training Split #", "nb_acuracy","lda_acuracy", "n
 rm(lda_acuracy , lda_Kappa, lda_Sens, lda_Spec, nb_acuracy, nb_Kappa, nb_Sens, nb_Spec) # remove unused variables
 ```
 
-As discussed in the previous questions, model acuracy can be some what domaon specific. In this case as we are lookinng at fraudulent bank notes, we will assume that we are interested mostly in not classifing any fraudelent cases as authentic. This is a resonable assumtion as classification as fraudulent will simply promt further investigation which, if a missclasification has occoured, can overturn the original classification. As we are interested in minimising the number of cases where false negatives are obtained we are striving to maximise the models sensitivity.  The below graph shows boths models accuracy and sensitivity for all 10 test training splits. The LDA model consistently perfroms exceptionally well. Often this could be at the cost of overall accuracy, however it can also be seen that the LDA models overall acuracy is also higher than the NB's model 
+As discussed in the previous questions, model accuracy can be some what domain specific. In this case as we are looking at fraudulent bank notes, we will assume that we are interested mostly in not classifying any fraudulent cases as authentic. This is a reasonable assumption as classification as fraudulent will simply prompt further investigation which, if a missclassification has occurred can simply be overturned. As we are interested in minimising the number of cases where false negatives are obtained we are striving to maximise the models sensitivity. Figure 9 shows both models accuracy and sensitivity for all 10 test training splits. The LDA model consistently performs exceptionally well. Often this could be at the cost of overall accuracy, however it can also be seen that the LDA models overall accuracy is also higher than the NB model.
 
-```{r echo = FALSE}
+```{r echo = FALSE, out.width="75%", out.extra='style="float:right; padding:10px"', fig.cap= " Figure 9: Model Accuracy"}
 ## Plot comparison of model performance
 performance_reduced <-performance[ , c(1,2,3,6,7)] 
 performance_flat <- melt(performance_reduced, id.vars = 1) # flatten performance for easy use in ggplot
-ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") # plot each performance metric for each test / train split, with lines between points to easily identify trends
+ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") + ggtitle("Comparision of Model accuracy over all splits") # plot each performance metric for each test / train split, with lines between points to easily identify trends
 ```
 
-The LDA models performance is noteably and consistently better than the NB's to better undersatnd the likely drivers for this being the case we will explore the attributes of the underlying data. One of the key differences between the LDA and NB model is that NB assumes that each predictor is independent. The LDA model does not need to assume this property of the predictor variables. It can be seen in the below figure that independance is a poor asumption for this data set as entropy has a resonably strong negative correlation with skewness and Kurtosis has a strong negative correlation with skewness. 
+The LDA models performance is notably and consistently better than NB. To better understand the drivers for this being the case we will explore the attributes of the underlying data. One of the key differences between the LDA and NB model is that NB assumes that each predictor is independent. The LDA model does not need to assume this property. To investigate if a degree of correlation exists between the predictors a correlation heat map was generated as shown in Figure 10. It can be seen that independence is a poor assumption for this data set as entropy has a reasonably strong negative correlation with skewness and Kurtosis has a strong negative correlation with skewness.
 
-```{r echo = FALSE}
+```{r echo = FALSE, out.width="50%", out.extra='style="float:left; padding:10px"', fig.cap= " Figure 10: Predictor Correlation Heatmap"}
 ## Plot correlation for discusions regarding assumptions
-plot_correlation(modelData[ ,1:4]) # create correlation heat map
+plot_correlation(modelData[ ,1:4], title = "Correlation Between Predictors") # create correlation heat map
 ```
 
 ## Apendix 1 - Full Code and Detailed plots and Outputs for Question 1
-
-```{r}
-## set up environment and import data file
-
-rm(list = ls()) # removes all variables
-if(!is.null(dev.list())) dev.off() # clear plots
-cat("\014") # clear console
-setwd("~/Documents/GitHub/ma5810_a1") # set the working directory
-
-# import required packages 
-library(DataExplorer)
-library(ggplot2)
-library(ggpubr)
-library(esquisse)
-
-set.seed(123) # sets seed for repeat ability of randomly generated numbers
-
-file <- 'HBblood.csv' # in this case the data is stored as a ".csv" file in the woking directory
-rawData <- read.csv(file, header = TRUE, stringsAsFactors = TRUE) # the data is imported, the .csv file has headers which will be used as the column names of the data frame, any stirngs in the data set will be treated as factors
-
-## data exploration and visualization
-str(rawData) # returns the structure of the data.frame 
-introduce(rawData) # returns some basic information about the data
-head(rawData) # shows the first 6 lines of data
-summary(rawData) # returns a basic statistical summary of the data
-
-ggplot(rawData) + aes(x = SBP, y = HbA1c, colour = Ethno) + geom_point(shape = "circle", size = 1.5) + scale_color_hue(direction = 1) + theme_minimal() # create scatter plot with predictor variables on x and y, colour points by Ethno
-
-hb <- ggplot(rawData) + aes(x = HbA1c) + geom_density(adjust = 1L, fill = "#FF8C00") + theme_minimal() # create distribution plot of HbA1c
-sb <- ggplot(rawData) + aes(x = SBP) + geom_density(adjust = 1L, fill = "#EF562D") + theme_minimal() # create distribution plot of SBP
-densityPlot <- ggarrange(hb,sb, labels = c("HbA1c", "SBP"), ncol = 1, nrow = 2) # group plots together, one on top of the other
-annotate_figure(densityPlot, top = text_grob("Density Distributions of Predictor variables HbA1c and SBP", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
-
-plot_correlation(rawData[ ,2:3], title = "Correlation Between Predictor Variables") # create a correlation plot to asses correlation and covariance between predictors
-
-hbByGroup <- ggplot(rawData) + aes(x = HbA1c, fill = Ethno) + geom_density(adjust = 1L) + scale_fill_hue(direction = 1) + theme_minimal() # create density plot by groups for HbA1c
-sbpByGroup <- ggplot(rawData) + aes(x = SBP, fill = Ethno) + geom_density(adjust = 1L) + scale_fill_hue(direction = 1) + theme_minimal() # create density plot by groups for SBP
-groupeddensityPlot <- ggarrange(hbByGroup,sbpByGroup, labels = c("HbA1c", "SBP"), ncol = 1, nrow = 2) # group plots together, one on top of the other
-annotate_figure(groupeddensityPlot, top = text_grob("Density Distributions of Predictor variables Grouped by Ethno", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
-```
-
-## Apendix 2 - Full Code and Detailed plots and Outputs for Question 2
-```{r}
-## set up environment and import csv file
-
-rm(list = ls()) # removes all variables
-if(!is.null(dev.list())) dev.off() # clear plots
-cat("\014") # clear console
-setwd("~/Documents/GitHub/ma5810_a1") # set the working directory
-
-# import required packages
-library(caret, warn.conflicts = F, quietly = T)
-library(dplyr)
-library(bnclassify)
-library(DataExplorer)
-library(doParallel)
-library(reshape2)
-
-set.seed(123) # sets seed for repeat ability of randomly generated numbers
-
-file <- 'https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data' # store the path to the source data
-rawData <- read.csv(file, header = FALSE, stringsAsFactors = TRUE) # import source data, in this case the data file has no headers and strings will be used a factors
-names(rawData) <- c("Edible", "Cap-Shape", "Cap-Surface", "Cap-Colour", "Bruises", "Odour", "Gill-Attachment", "Gill-Spacing", "Gill-Size", "Gill-Colour", "Stalk-Shape", "Stalk-Root",  # name data.frame columns
-                    "Stalk-Surface-Above-Ring", "Stalk-Surface-Below-Ring", "Stalk-Colour-Above-Ring", "Stalk-Colour-Below-Ring", "Veil-Type", "Veil-Colour", "Ring-Number", "Ring-Type", "Spore-Print-Colour", "Population", "Habitat")
-
-## exploratory visualization of the data set
-str(rawData) # returns the structure of the data.frame 
-introduce(rawData) # returns some basic information about the data
-plot_bar(rawData) # generate bar plots showing the count of each variable class
-
-modelData <- within(rawData, rm("Veil-Type")) # drop "veil-Type" as it has only one class
-plot_bar(modelData, by = "Edible") # create bar plots of all predictor variables showing the make up of the response variable in each class
-
-# group minority classes and change variable type back to factor
-modelData <- group_category(data = modelData, feature = "Cap-Colour", threshold = 0.2, update = TRUE) 
-modelData <- group_category(data = modelData, feature = "Stalk-Colour-Below-Ring", threshold = 0.2, update = TRUE)
-modelData <- group_category(data = modelData, feature = "Spore-Print-Colour", threshold = 0.2, update = TRUE)
-modelData$`Cap-Colour` <- as.factor(modelData$`Cap-Colour`)
-modelData$`Stalk-Colour-Below-Ring` <- as.factor(modelData$`Stalk-Colour-Below-Ring`)
-modelData$`Spore-Print-Colour` <- as.factor(modelData$`Spore-Print-Colour`)
-
-rm(rawData, file) # remove variables that will no longer be required
-
-## create test training split, create test data frame and create training predictors data frame and training response vector
-train_index_10 <- createDataPartition(modelData$Edible, p=0.8, list = FALSE, times = 10) # returns numerical vector of the index of the observations to be included in the training set, repeat so we have 10 different test training sets for later
-predictors <- names(modelData[-1]) # return vector of column names, removing "Auth" as it is the response variable
-
-## set up training environment with the details of the validation method and tune grid
-(modelLookup("nbDiscrete"))
-train_control <- trainControl(method = "cv", number = 10) # instruct training to occur using k folds cross validation with 10 folds
-tune_params_initial <- expand.grid(smooth = 1:10) # create a training grid
-
-## register doParallel
-cl <- makePSOCKcluster(4)
-registerDoParallel(cl)
-
-start_time <- Sys.time() # record start time of model trainings
-
-## tune model over all 10 test / training splits
-all_nb_tune <- lapply(seq_len(ncol(train_index_10)), function(i){ # rather than use "for loop" lapply runs the defined function for all prescribed values of i
-  
-  trainingPredictors <- modelData[train_index_10[ ,i],predictors] # create data.frame of training predictors
-  trainingResponse <- modelData[train_index_10[ ,i],"Edible"] # create training response vector
-  
-  mushroom_mod_tune <- train(x = trainingPredictors, y = trainingResponse, method = "nbDiscrete", trControl = train_control, tuneGrid = tune_params_initial) # train model
-  
-  mushroom_mod_tune$finalModel$tuneValue[1,1] # return the hyperparameter for the best model found in the 10 fold cross validation
-
-})
-
-## get final hyper parameters
-tune_params_final <- expand.grid(smooth = mean((unlist(all_nb_tune)))) # unlist and average hyperparameter from all 10 training sets
-
-rm(all_nb_tune, tune_params_initial)
-
-## train model across all 10 test / training splits and return accuracy of model each time
-all_nb_accuracyTraining <- lapply(seq_len(ncol(train_index_10)), function(i){ # rather than use "for loop" lapply runs the defined function for all prescribed values of i
-  
-  trainingPredictors <- modelData[train_index_10[ ,i],predictors] # create data.frame of training predictors
-  trainingResponse <- modelData[train_index_10[ ,i],"Edible"] # create training response vector
-  mushroom_mod4ass <- train(x = trainingPredictors, y = trainingResponse, method = "nbDiscrete", trControl = train_control, tuneGrid = tune_params_final) # train model
-  
-  mushroom_mod4ass$results["Accuracy"] # return the accuracy of the model on the training data
-  
-})
-
-trainingAccuracy <- unlist(all_nb_accuracyTraining) # make training accuracy a simple vector showing the average model accuracy on the training data for each test/ train split 
-
-## train model across all 10 test / training splits and return confusion matrix each time
-all_nb_confusionMatrix <- lapply(seq_len(ncol(train_index_10)), function(i){
-  
-  trainingPredictors <- modelData[train_index_10[ ,i],predictors] # create data.frame of training predictors
-  trainingResponse <- modelData[train_index_10[ ,i],"Edible"] # create training response vector
-  testData <- modelData[-train_index_10[,i], ] # create test data set
-  mushroom_mod4ass <- train(x = trainingPredictors, y = trainingResponse, method = "nbDiscrete", trControl = train_control, tuneGrid = tune_params_final) # train model
-  pred <- predict(mushroom_mod4ass, newdata = testData) # use model to make predictions using the predictors from the trainingset
-  
-  confusionMatrix(pred, testData$Edible) # return confusion matrix for predicted and actual classes
-  
-})
-
-end_time <- Sys.time() # record time at end of analysis
-runtime <- end_time - start_time # calculate run time
-
-
-## build data.frame of the performance scores for each test/ training split
-
-nb_acuracy <- lapply(seq_len(length(all_nb_confusionMatrix)), function(i){
-  unlist(all_nb_confusionMatrix[[i]]$overall["Accuracy"])
-})
-
-nb_Kappa <- lapply(seq_len(length(all_nb_confusionMatrix)), function(i){
-  unlist(all_nb_confusionMatrix[[i]]$overall["Kappa"])
-})
-
-nb_Sens <- lapply(seq_len(length(all_nb_confusionMatrix)), function(i){
-  unlist(all_nb_confusionMatrix[[i]]$byClass["Sensitivity"])
-})
-
-nb_Spec <- lapply(seq_len(length(all_nb_confusionMatrix)), function(i){
-  unlist(all_nb_confusionMatrix[[i]]$byClass["Specificity"])
-})
-
-performance <- data.frame(c(1:10), unlist(nb_acuracy), unlist(nb_Kappa), unlist(nb_Sens), unlist(nb_Spec), trainingAccuracy)
-names(performance) <- c("Test/ Training Split #", "Accuracy","Kappa", "Sensitivity","Specitivity", "Accuracy on Training Data")
-
-rm(nb_acuracy, nb_Kappa, nb_Sens, nb_Spec, all_nb_confusionMatrix)
-
-## train model on single test training set to inspect the importance of individual variables and easily look into model results
-
-trainingPredictors <- modelData[train_index_10[ ,1],predictors] # create data.frame of training predictors
-trainingResponse <- modelData[train_index_10[ ,1],"Edible"] # create training response vector
-testData <- modelData[-train_index_10[,1], ] # create test data set
-mushroom_mod4ass <- train(x = trainingPredictors, y = trainingResponse, method = "nbDiscrete", trControl = train_control, tuneGrid = tune_params_final) # train model
-pred <- predict(mushroom_mod4ass, newdata = testData) # use model to make predictions using the predictors from the trainingset
-confusionMatrix(pred, testData$Edible) # return confusion matrix for predicted and actual classes
-
-## Plot model performance
-performance_flat <- melt(performance, id.vars = 1) # flatten performance for easy use in ggplot
-ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") # plot each performance metric for each test / train split, with lines between points to easily identify trends
-
-## plot plot variable importance
-varimp <- varImp(mushroom_mod4ass)
-plot(varimp)
-
-## plot the 2 most and least important variable for discussion
-spc <- ggplot(modelData) + aes(x = `Spore-Print-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-gc <- ggplot(modelData) + aes(x = `Gill-Colour`, fill = Edible) + geom_bar() +scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-vc <- ggplot(modelData) + aes(x = `Veil-Colour`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904", p = "#E42511")) + theme_minimal()
-ga <- ggplot(modelData) + aes(x = `Gill-Attachment`, fill = Edible) + geom_bar() + scale_fill_manual(values = c(e = "#23A904",  p = "#E42511")) + theme_minimal()
-comparision <- ggarrange(spc, gc, vc, ga, labels = c("Spore-Print_colour","Gill-Colour", "Veil-Colour", "Gill-Attachment"), ncol = 2, nrow = 2) # group plots together, one on top of the other
-annotate_figure(comparision, top = text_grob("Most and Least Important Variables", color = "blue", face = "bold", size = 16)) # give the plot frame a common tittle
-
-## close cluster
-stopCluster(cl)
-```
-
-## Apendix 3 - Full Code and Detailed plots and Outputs for Question 3
-```{r}
-## set up environment and import data file
-
-rm(list = ls()) # removes all variables
-if(!is.null(dev.list())) dev.off() # clear plots
-cat("\014") # clear console
-setwd("~/Documents/GitHub/ma5810_a1") # set the working directory
-
-# import required packages 
-library(caret, warn.conflicts = F, quietly = T)
-library(dplyr)
-library(DataExplorer)
-library(doParallel)
-library(esquisse)
-library(reshape2)
-
-set.seed(123) # sets seed for repeat ability of randomly generated numbers
-
-file <- 'https://archive.ics.uci.edu/ml/machine-learning-databases/00267/data_banknote_authentication.txt' # store the path to the source data
-rawData <- read.csv(file, header = FALSE) # import source data, in this case the data file has no headers and strings will be used a factors
-names(rawData) <- c("Variance", "Skewness","Kurtosis", "Entropy", "Auth") # set column names in data.frame
-rawData <- rawData %>% mutate(Auth = ifelse(Auth == 1, "Authentic", "Fraudulent")) # change the values Auth with an observation of 1 to "True", otherwise "False"
-rawData$Auth <- as.factor(rawData$Auth) # make the "Auth" column a factor
-
-## exploratory visualization of the dataset and summation of data set
-str(rawData)
-introduce(rawData)
-head(rawData)
-summary(rawData)
-plot_histogram(rawData)
-plot_bar(rawData)
-plot_qq(rawData)
-plot_correlation(rawData[ ,1:4])
-
-modelData <- rawData # the raw data set looks suitable to model with
-
-## create test training split, create test data frame and create training predictors data frame and training response vector
-train_index_10 <- createDataPartition(modelData$Auth, p=0.8, list = FALSE, times = 10) # returns numerical vector of the index of the observations to be included in the training set, repeat so we have 10 different test training sets for later
-train_index <- train_index_10[ ,1] # tuining hyperparaemters over a single test set is suitable so split out first index
-predictors <- names(modelData[-5]) # return vector of column names, removing "Auth" as it is the response variable
-
-testData <- modelData[-train_index, ] # create data.frame of test data
-trainingPredictors <- modelData[train_index,predictors] # create data.frame of training predictors
-trainingResponse <- as.factor(modelData[train_index, "Auth"]) # create vector of training responses
-
-rm(rawData, file) # remove unused variables
-
-## register doParallel
-cl <- makePSOCKcluster(4)
-registerDoParallel(cl)
-
-## train and tune Naive Bayes classifier using caret. We will first tune both models using a single test and training data set to obtain the best hyperparameters for each model
-start_time <- Sys.time() # record start time
-
-train_control <- trainControl(method = "cv", number = 10) # use 10 fold cross validation on the training set to asses model hyper parameters
-tune_params <- expand.grid(usekernel = c(TRUE, FALSE), fL = 1:5, adjust = 1:5) # create tuning grid over available hyper parameters for NB model
-
-bank_nb<- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy") # train model
-bank_nb_final <- bank_nb$finalModel # save the most acurate model
-
-tune_params <- expand.grid(dimen = 0:10) # create tuning grid over available hyper parameters for LDA model
-
-bank_lda <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params, metric = "Accuracy") # train model
-bank_lda_final <- bank_lda$finalModel # save most accurate model
-
-rm(tune_params, train_index, trainingPredictors, trainingResponse)
-
-## create confusion matrix to summarize each model
-pred <- predict(bank_nb, newdata = testData) # use model to make predictions using the predictors from the trainingset
-confusionMatrix(pred, testData$Auth) # return confusion matrix for predicted and actual classes
-pred <- predict(bank_lda, newdata = testData) # use model to make predictions using the predictors from the trainingset
-confusionMatrix(pred, testData$Auth) # return confusion matrix for predicted and actual classes
-
-rm(pred) # remove unused variables
-
-## compare models over 10 different test/training data sets
-tune_params_nb <- expand.grid(usekernel = bank_nb_final$tuneValue[1,2], fL = bank_nb_final$tuneValue[1,1], adjust = bank_nb_final$tuneValue[1,3]) # set the model hyper parameters to the values that were best from the above step
-tune_params_lda <- expand.grid(dimen = bank_lda_final$tuneValue[1,1]) # set the model hyper parameters to the values that were best from the above step
-
-all_nb <- lapply(seq_len(ncol(train_index_10)), function(i){ # rather than use "for loop" lapply runs the defined function for all prescribed values of i
-  
-  trainingPredictors <- modelData[train_index_10[ ,i],predictors] # create data.frame of training predictors
-  trainingResponse <- modelData[train_index_10[ ,i],"Auth"] # create training response vector
-  testData <- modelData[-train_index_10[,i], ] # create data.frame of tests data
-  bank_mod4ass_nb <- train(x = trainingPredictors, y = trainingResponse, method = "nb", trControl = train_control, tuneGrid = tune_params_nb) # train model
-  pred <- predict(bank_mod4ass_nb, newdata = testData) # use model to create predictions
-  
-  confusionMatrix(pred, testData$Auth) # return confusion matrix
-
-})
-
-all_lda <- lapply(seq_len(ncol(train_index_10)), function(i){ # rather than use "for loop" lapply runs the defined function for all prescribed values of i
-  
-  trainingPredictors <- modelData[train_index_10[ ,i],predictors] # create data.frame of training predictors
-  trainingResponse <- modelData[train_index_10[ ,i],"Auth"] # create training response vector
-  testData <- modelData[-train_index_10[,i], ] # create data.frame of tests data
-  bank_mod4ass_lda <- train(x = trainingPredictors, y = trainingResponse, method = "lda2", trControl = train_control, tuneGrid = tune_params_lda) # train model
-  pred <- predict(bank_mod4ass_lda, newdata = testData) # use model to create predictions
-  
-  confusionMatrix(pred, testData$Auth) # return confusion matrix
-  
-})
-
-end_time <- Sys.time() # record end tiem of models
-(runtime <- end_time - start_time) # calculate run time
-
-
-## close cluster
-stopCluster(cl)
-
-## unpacked the performance metrics from the LDA and NB confusion matrices
-
-lda_acuracy <- lapply(seq_len(length(all_lda)), function(i){
-  unlist(all_lda[[i]]$overall["Accuracy"])
-})
-
-lda_Kappa <- lapply(seq_len(length(all_lda)), function(i){
-  unlist(all_lda[[i]]$overall["Kappa"])
-})
-
-lda_Sens <- lapply(seq_len(length(all_lda)), function(i){
-  unlist(all_lda[[i]]$byClass["Sensitivity"])
-})
-
-lda_Spec <- lapply(seq_len(length(all_lda)), function(i){
-  unlist(all_lda[[i]]$byClass["Specificity"])
-})
-
-nb_acuracy <- lapply(seq_len(length(all_nb)), function(i){
-  unlist(all_nb[[i]]$overall["Accuracy"])
-})
-
-nb_Kappa <- lapply(seq_len(length(all_nb)), function(i){
-  unlist(all_nb[[i]]$overall["Kappa"])
-})
-
-nb_Sens <- lapply(seq_len(length(all_nb)), function(i){
-  unlist(all_nb[[i]]$byClass["Sensitivity"])
-})
-
-nb_Spec <- lapply(seq_len(length(all_nb)), function(i){
-  unlist(all_nb[[i]]$byClass["Specificity"])
-})
-
-performance<- data.frame(c(1:10), unlist(nb_acuracy), unlist(lda_acuracy), unlist(nb_Kappa), unlist(lda_Kappa), unlist(nb_Sens), unlist(lda_Sens), unlist(nb_Spec), unlist(lda_Spec)) # create data frame of performance metrics
-
-names(performance) <- c("Test/ Training Split #", "nb_acuracy","lda_acuracy", "nb_Kappa", "lda_Kappa", "nb_Sens", "lda_Sens", "nb_Spec", "lda_Spec") # name columns of data frame
-
-rm(lda_acuracy , lda_Kappa, lda_Sens, lda_Spec, nb_acuracy, nb_Kappa, nb_Sens, nb_Spec) # remove unused variables
-
-## Plot comparison of model performance
-performance_reduced <-performance[ , c(1,2,3,6,7)] 
-performance_flat <- melt(performance_reduced, id.vars = 1) # flatten performance for easy use in ggplot
-ggplot(data = performance_flat, aes(x =`Test/ Training Split #`, y = `value`, shape = `variable`, colour = `variable`)) + geom_point(size = 4) + geom_line() + theme(legend.position = "bottom") # plot each performance metric for each test / train split, with lines between points to easily identify trends
-
-## Plot correlation for discusions regarding assumptions
-plot_correlation(modelData[ ,1:4]) # create correlation heat map
-```
